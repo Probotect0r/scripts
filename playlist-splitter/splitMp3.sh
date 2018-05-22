@@ -11,9 +11,9 @@ while read line; do
     if [[ $line =~ Playlist.* ]]
     then
         echo "Processing: $line"
+        CURRENT_PLAYLIST=$(echo $line | sed -e 's/\s/-/')
     else
         time=$(get_timestamp "$line")
         echo "$time"
     fi
 done < $INFO_FILE 
-
