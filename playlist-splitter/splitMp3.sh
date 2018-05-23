@@ -1,8 +1,6 @@
 #!/usr/bin/bash
 
 INFO_FILE=playlist-info.txt
-line_count=$(wc -l $INFO_FILE | awk '{print $1}')
-echo $line_count
 
 get_timestamp() {
     local timestamp=$1
@@ -17,26 +15,42 @@ get_timestamp() {
     echo "$timestamp"
 }
 
-get_current_playlist() {
-    local playlist=$(echo $line | sed -e 's/\s/-/')
-    echo "$playlist"
+parse_playlist_title() {
+    local title=$(echo $1 | sed -e 's/\s/-/')
+    echo "$title"
 }
 
 get_title() {
-    local full_title=$(echo $1 | sed -E -e 's/^.{8}\s//' )
+    local full_title=$(echo $1 | sed -E -e 's/^[^ ]*\s//' )
     echo $full_title
 }
 
+line_count=$(wc -l $INFO_FILE | awk '{print $1}')
+
 for ((i=1; i<=$line_count; i++))
 do
-    line=$(sed "${i}q;d" $INFO_FILE)
-    if [[ $line =~ Playlist.* ]]
+    current_line=$(sed "${i}q;d" $INFO_FILE)
+
+
+    if [[ $current_line =~ Playlist.* ]]
     then
-        CURRENT_PLAYLIST=$(get_current_playlist "$line")
+        CURRENT_PLAYLIST=$(parse_playlist_title "$current_line")
         echo "Processing: $CURRENT_PLAYLIST"
     else
-        time=$(get_timestamp $line)
-        title=$(get_title $line)
-        echo $title
+        current_line_timestamp=$(get_timestamp $current_line)
+        current_line_title=$(get_title "$current_line")
+
+        next_line_num=$(($i + 1))
+        next_line=$(sed "${next_line_num}q;d" $INFO_FILE)
+        
+        if [[ $next_line =~ Playlist.* ]] || [[ -z $next_line ]]
+        then
+            # Execute ffmpeg with no end
+            echo "$current_line_title: $current_line_timestamp -> END"
+        else
+            next_line_timestamp=$(get_timestamp $next_line)
+            # Execute ffmpeg with 
+            echo "$current_line_title: $current_line_timestamp -> $next_line_timestamp"
+        fi
     fi
 done
