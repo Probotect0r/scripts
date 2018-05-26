@@ -20,14 +20,10 @@ function processLine(line) {
 		}
 		console.log(`Processing: ${currentPlaylist}`)
 	} else {
-		// it's a line containing a song for the currentPlaylist
-		// get timestamp
-		// find first space, and get substring til that position
 		let spacePos = line.indexOf(" ")									
 		let timestamp = line.substring(0, spacePos)
 		let title = line.substring(spacePos + 1)
 
-		// Add standardized timestamp and title to respective arrays in tracker object
 		tracker[currentPlaylist].timestamps.push(standardizeTimestamp(timestamp.trim()))
 		tracker[currentPlaylist].titles.push(title.trim())
 	}
@@ -46,13 +42,6 @@ function standardizeTimestamp(timestamp) {
 }
 
 function splitFiles() {
-	// 	1. 	Make a directory for the playlist - Done
-	// 	2. 	Loop through each of the timestamps / titles
-	// 	3. 	Split the file, using that timestamp as the start,
-	//    	and the next one as the end. 
-	//    	a)	Set the artist as the game the song is from
-	//    	b)	Set the output file name to the song name.
-	
 	// Loop through each playlist
 	playlists = Object.keys(tracker)
 	for (let playlist of playlists) {
