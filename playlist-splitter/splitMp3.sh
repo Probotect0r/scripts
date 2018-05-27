@@ -8,11 +8,12 @@ get_timestamp() {
     local timestamp=$1
     
     # Standardize the timestamp
-    count=$(echo $timestamp | grep -o ':' | wc -l)
+    count=$(echo "$timestamp" | grep -o ':' | wc -l)
 
     if [[ $count == 1 ]]
     then
-        timestamp=$(echo $timestamp | sed -e 's/^/00:/')
+        # timestamp=$(echo "$timestamp" | sed -e 's/^/00:/')
+        timestamp=${timestamp/#/00:}
     fi
     echo "$timestamp"
 }
@@ -22,18 +23,21 @@ parse_playlist_title() {
 }
 
 get_full_title() {
-    local full_title=$(echo $1 | sed -E -e 's/^[^ ]*\s//' )
-    echo $full_title
+    local full_title
+    full_title=$(echo $1 | sed -E -e 's/^[^ ]*\s//' )
+    echo "$full_title"
 }
 
 get_song_title() {
-    local title=$(echo $1 | sed -E -e 's/^.*-\s//')
-    echo $title
+    local title
+    title=$(echo "$1" | sed -E -e 's/^.*-\s//')
+    echo "$title"
 }
 
 get_artist_name() {
-    local artist=$(echo $1 | sed -E -e 's/\s-.*$//')
-    echo $artist
+    local artist
+    artist=$(echo "$1" | sed -E -e 's/\s-.*$//')
+    echo "$artist"
 }
 
 execute_ffmpeg() {
@@ -46,25 +50,26 @@ execute_ffmpeg() {
 
     if [[ -n $end ]]
     then
-        ffmpeg -i "$input_file" -acodec copy -ss $start -to $end -metadata title="$song" -metadata artist="$artist" "$output_file"
+        ffmpeg -i "$input_file" -acodec copy -ss "$start" -to "$end" -metadata title="$song" -metadata artist="$artist" "$output_file"
     else
-        ffmpeg -i "$input_file" -acodec copy -ss $start -metadata title="$song" -metadata artist="$artist" "$output_file"
+        ffmpeg -i "$input_file" -acodec copy -ss "$start" -metadata title="$song" -metadata artist="$artist" "$output_file"
     fi
 }
 
 line_count=$(wc -l $INFO_FILE | awk '{print $1}')
 
-for ((i=1; i<=$line_count; i++))
+for ((i=1; i<=line_count; i++))
 do
     current_line=$(sed "${i}q;d" $INFO_FILE)
 
     if [[ $current_line =~ Playlist.* ]]
     then
         CURRENT_PLAYLIST_ORIG="$current_line"
-        CURRENT_PLAYLIST=$(echo "$CURRENT_PLAYLIST_ORIG" | sed -e 's/\s/-/')
-        echo "Processing: $CURRENT_PLAYLIST"
-        mkdir $CURRENT_PLAYLIST
+        #CURRENT_PLAYLIST=$(echo "$CURRENT_PLAYLIST_ORIG" | sed -e 's/\s/-/')
+        CURRENT_PLAYLIST=${CURRENT_PLAYLIST_ORIG/ /-}
 
+        echo "Processing: $CURRENT_PLAYLIST"
+        mkdir "$CURRENT_PLAYLIST"
     else
         start_time=$(get_timestamp $current_line)
         full_title=$(get_full_title "$current_line")
@@ -72,7 +77,7 @@ do
         artist=$(get_artist_name "$full_title")
         song_title=$(get_song_title "$full_title")
 
-        next_line_num=$(($i + 1))
+        next_line_num=$((i + 1))
         next_line=$(sed "${next_line_num}q;d" $INFO_FILE)
 
         input_file="$INPUT_DIR/$CURRENT_PLAYLIST_ORIG.mp3"
